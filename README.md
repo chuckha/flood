@@ -23,11 +23,11 @@ See `flood` for usage.
 
 * See all of your droplets:
 
-    flood droplet list
+        flood droplet list
 
 * Show all available droplet sizes:
 
-    flood size list
+        flood size list
 
 ## License
 
