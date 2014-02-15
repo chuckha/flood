@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"text/template"
@@ -63,4 +64,14 @@ func tmpl(w io.Writer, text string, data interface{}) {
 	if err := t.Execute(w, data); err != nil {
 		panic(err)
 	}
+}
+
+func PrintResponse(resp []byte) error {
+	var b bytes.Buffer
+	err := json.Indent(&b, resp, "", "    ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(b.String())
+	return nil
 }

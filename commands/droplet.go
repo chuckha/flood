@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/chuckha/flood/api"
@@ -17,18 +16,11 @@ var list = &Command{
 	Name:  "list",
 	Short: "list active droplets",
 	Run: func(cmd *Command, args []string) error {
-		bytes, err := api.Call(dropletResource, "", "list")
+		resp, err := api.Call(dropletResource, "", "list")
 		if err != nil {
 			return err
 		}
-		resp := &api.DropletListResponse{}
-		json.Unmarshal(bytes, resp)
-		indented, err := json.MarshalIndent(resp, "", "    ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(indented))
-		return nil
+		return PrintResponse(resp)
 	},
 }
 var create = &Command{
@@ -45,12 +37,11 @@ flood image list # for images
 
 `,
 	Run: Require(func(cmd *Command, args []string) error {
-		bytes, err := api.Call(dropletResource, "", "create")
+		resp, err := api.Call(dropletResource, "", "create")
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(bytes))
-		return nil
+		return PrintResponse(resp)
 	}, RequireArgsErr),
 }
 var show = &Command{
@@ -61,12 +52,11 @@ var show = &Command{
 flood droplet show <id>
 `,
 	Run: Require(func(cmd *Command, args []string) error {
-		bytes, err := api.Call(dropletResource, "", "show")
+		resp, err := api.Call(dropletResource, "", "show")
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(bytes))
-		return nil
+		return PrintResponse(resp)
 	}, RequireIdErr),
 }
 var reboot = &Command{
@@ -77,12 +67,11 @@ var reboot = &Command{
 flood droplet reboot <id>
 `,
 	Run: Require(func(cmd *Command, args []string) error {
-		bytes, err := api.Call(dropletResource, "", "reboot")
+		resp, err := api.Call(dropletResource, "", "reboot")
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(bytes))
-		return nil
+		return PrintResponse(resp)
 	}, RequireIdErr),
 }
 

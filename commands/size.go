@@ -1,9 +1,6 @@
 package commands
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/chuckha/flood/api"
 )
 
@@ -18,13 +15,7 @@ var sizeList = &Command{
 		if err != nil {
 			return err
 		}
-		//resp := &api.SizeListResponse{}
-		var b bytes.Buffer
-		err = json.Indent(&b, jsonBytes, "", "    ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(b.String())
+		PrintResponse(jsonBytes)
 		return nil
 	},
 }

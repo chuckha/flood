@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/chuckha/flood/api"
 )
@@ -50,18 +49,11 @@ var listImages = &Command{
 	Name:  "list",
 	Short: "List all available images",
 	Run: func(cmd *Command, args []string) error {
-		bytes, err := api.Call(imageResource, "", "list")
+		jsonBytes, err := api.Call(imageResource, "", "list")
 		if err != nil {
 			return err
 		}
-		resp := &api.ImageListResponse{}
-		json.Unmarshal(bytes, resp)
-		indented, err := json.MarshalIndent(resp, "", "    ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(indented))
-		return nil
+		return PrintResponse(jsonBytes)
 	},
 }
 
