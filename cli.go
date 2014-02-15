@@ -24,8 +24,10 @@ func main() {
 	for _, cmd := range cmds {
 		if cmd.Name == args[0] {
 			cmd.Run(cmd, args[1:])
+			return
 		}
 	}
+	usage()
 }
 
 func tmpl(w io.Writer, text string, data interface{}) {
@@ -90,7 +92,7 @@ flood event show 1234
 
 var usageTemplate = `flood is a tool for interfacing with the Digital Ocean API.
 
-Usage:
+General usage pattern:
 
         flood resource action [id]
 
