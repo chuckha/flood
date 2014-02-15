@@ -21,12 +21,9 @@ See `flood` for usage.
 
 ## Examples
 
-* See all of your droplets:
+* See all of your droplets: `flood droplet list`
+* Show all available droplet sizes: `flood size list`
 
-        flood droplet list
-* Show all available droplet sizes:
-
-        flood size list
 ## License
 
 MIT.
