@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -46,6 +47,18 @@ func GetUrl(resource, id, action string) string {
 
 func AddCredentials(s string) string {
 	return fmt.Sprintf("%v?client_id=%v&api_key=%v", s, clientId, apiKey)
+}
+
+func CreateDropletParams(name, sshKeyIds, sizeId, imageId, regionId, privateNetworking, backupsEnabled string) string {
+	v := url.Values{}
+	v.Add("name", name)
+	v.Add("ssh_key_ids", sshKeyIds)
+	v.Add("size_id", fmt.Sprintf("%v", sizeId))
+	v.Add("image_id", fmt.Sprintf("%v", imageId))
+	v.Add("region_id", fmt.Sprintf("%v", regionId))
+	v.Add("private_networking", fmt.Sprintf("%v", privateNetworking))
+	v.Add("backups_enabled", fmt.Sprintf("%v", backupsEnabled))
+	return v.Encode()
 }
 
 func MakeRequest(URL string) ([]byte, error) {

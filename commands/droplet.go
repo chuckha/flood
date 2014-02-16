@@ -2,17 +2,28 @@ package commands
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/chuckha/flood/api"
 	"os"
 )
 
+func init() {
+	dropletCreate.Flag.String("name", "test", "sets the name of the droplet to create")
+	dropletCreate.Flag.Int("size_id", 66, "sets the size of the droplet. Defaults to smallest droplet")
+	dropletCreate.Flag.Int("region_id", 4, "sets the region to create the droplet in, defaults to NYC2")
+	dropletCreate.Flag.Int("image_id", 1505699, "sets the image of the droplet. Defaults to Ubuntu 13.10 x64")
+	dropletCreate.Flag.String("ssh_key_ids", "", "A comma separated list of ssh key ids (found via sshkey list). These keys will be installed on the droplet. Defaults to none.")
+	dropletCreate.Flag.Bool("private_networking", false, "enable private networking. Defaults to false")
+	dropletCreate.Flag.Bool("backups_enabled", false, "enable backups. Defaults to false")
+}
+
 var Droplet = NewCommand("droplet", "manages droplets",
-	list, create, show, reboot)
+	dropletList, dropletCreate, dropletShow, dropletReboot)
 
 const dropletResource = "droplets"
 
-var list = &Command{
+var dropletList = &Command{
 	Name:  "list",
 	Short: "list active droplets",
 	Run: func(cmd *Command, args []string) error {
@@ -23,12 +34,17 @@ var list = &Command{
 		return PrintResponse(resp)
 	},
 }
-var create = &Command{
+var dropletCreate = &Command{
 	Name:  "create",
 	Short: "create a new droplet",
+	Flag:  flag.NewFlagSet("create", flag.ContinueOnError),
 	Long: `Usage:
 
-flood droplet create <name> <size_id> <image_id> <region_id> [<ssh_key_ids>, <private_networking>, <backups_enabled>]
+flood droplet create -name name -size_id id -image_id id -region_id id [<ssh_key_ids>, <private_networking>, <backups_enabled>]
+
+Options:
+
+    -name Sets the name of the flag, defaults to "test"
 
 To see various pieces of data:
 
@@ -36,15 +52,32 @@ flood size list # for sizes
 flood image list # for images
 
 `,
-	Run: Require(func(cmd *Command, args []string) error {
-		resp, err := api.Call(dropletResource, "", "create")
+	Run: func(cmd *Command, args []string) error {
+		if len(args) >= 1 && args[0] == "help" {
+			fmt.Println(cmd.Long)
+			return nil
+		}
+		cmd.Flag.Parse(args)
+		name := cmd.Flag.Lookup("name").Value.String()
+		sshKeyIds := cmd.Flag.Lookup("ssh_key_ids").Value.String()
+		regionId := cmd.Flag.Lookup("region_id").Value.String()
+		sizeId := cmd.Flag.Lookup("size_id").Value.String()
+		imageId := cmd.Flag.Lookup("image_id").Value.String()
+		privateNetworking := cmd.Flag.Lookup("private_networking").Value.String()
+		backupsEnabled := cmd.Flag.Lookup("backups_enabled").Value.String()
+
+		url := api.GetUrl(dropletResource, "", "create")
+		fullUrl := fmt.Sprintf("%v&%v", url, api.CreateDropletParams(
+			name, sshKeyIds, sizeId, imageId,
+			regionId, privateNetworking, backupsEnabled))
+		resp, err := api.MakeRequest(fullUrl)
 		if err != nil {
 			return err
 		}
 		return PrintResponse(resp)
-	}, RequireArgsErr),
+	},
 }
-var show = &Command{
+var dropletShow = &Command{
 	Name:  "show",
 	Short: "get information on one droplet",
 	Long: `Usage:
@@ -59,7 +92,7 @@ flood droplet show <id>
 		return PrintResponse(resp)
 	}, RequireIdErr),
 }
-var reboot = &Command{
+var dropletReboot = &Command{
 	Name:  "reboot",
 	Short: "reboot a droplet",
 	Long: `Usage:

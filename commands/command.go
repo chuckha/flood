@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"text/template"
@@ -15,6 +16,7 @@ type Command struct {
 	Long     string
 	Template string
 	Commands []*Command
+	Flag     *flag.FlagSet
 }
 
 func NewCommand(name, short string, cmds ...*Command) *Command {
