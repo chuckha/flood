@@ -13,6 +13,7 @@ var cmds = []*commands.Command{
 	commands.Size,
 	commands.Image,
 	commands.Region,
+	commands.SSHKey,
 }
 
 func main() {
