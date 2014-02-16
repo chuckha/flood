@@ -60,6 +60,11 @@ func CreateDropletParams(name, sshKeyIds, sizeId, imageId, regionId, privateNetw
 	v.Add("backups_enabled", fmt.Sprintf("%v", backupsEnabled))
 	return v.Encode()
 }
+func DestroyDropletParams(scrubData string) string {
+	v := url.Values{}
+	v.Add("scrub_data", scrubData)
+	return v.Encode()
+}
 
 func MakeRequest(URL string) ([]byte, error) {
 	resp, err := http.Get(URL)

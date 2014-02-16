@@ -9,17 +9,20 @@ import (
 )
 
 func init() {
-	dropletCreate.Flag.String("name", "test", "sets the name of the droplet to create")
+	dropletCreate.Flag.String("name", "", "sets the name of the droplet to create")
 	dropletCreate.Flag.Int("size_id", 66, "sets the size of the droplet. Defaults to smallest droplet")
 	dropletCreate.Flag.Int("region_id", 4, "sets the region to create the droplet in, defaults to NYC2")
 	dropletCreate.Flag.Int("image_id", 1505699, "sets the image of the droplet. Defaults to Ubuntu 13.10 x64")
 	dropletCreate.Flag.String("ssh_key_ids", "", "A comma separated list of ssh key ids (found via sshkey list). These keys will be installed on the droplet. Defaults to none.")
 	dropletCreate.Flag.Bool("private_networking", false, "enable private networking. Defaults to false")
 	dropletCreate.Flag.Bool("backups_enabled", false, "enable backups. Defaults to false")
+
+	dropletDestroy.Flag.Bool("scrub_data", false, "write 0s to the whole partition before destroying")
 }
 
 var Droplet = NewCommand("droplet", "manages droplets",
-	dropletList, dropletCreate, dropletShow, dropletReboot)
+	dropletList, dropletCreate, dropletShow, dropletReboot,
+	dropletDestroy)
 
 const dropletResource = "droplets"
 
@@ -40,17 +43,42 @@ var dropletCreate = &Command{
 	Flag:  flag.NewFlagSet("create", flag.ContinueOnError),
 	Long: `Usage:
 
-flood droplet create -name name -size_id id -image_id id -region_id id [<ssh_key_ids>, <private_networking>, <backups_enabled>]
+flood droplet create -name name [-size_id id -image_id id -region_id id -ssh_key_ids id1,id2 -private_networking false -backups_enabled true]
 
 Options:
 
-    -name Sets the name of the flag, defaults to "test"
+    -name (required)
+      Sets the name of the droplet.
 
-To see various pieces of data:
+    -size_id 
+      Sets the size of the droplet, defaults to 512MB.
 
-flood size list # for sizes
-flood image list # for images
+      Related:
+        flood size list
 
+    -region_id 
+      Sets the region the droplet will be created in, defaults to NYC2.
+
+      Related:
+        flood region list
+
+    -image_id 
+      Sets the base image for the droplet, defaults to Ubuntu 13.10 x64.
+    
+      Related: 
+        flood image list
+
+    -ssh_key_ids (optional)
+      Sets the ssh keys installed on the droplet. Comma separated list. 
+
+      Example:
+        flood droplet create -ssh_key_ids=1234,4532
+
+    -private_networking (optional)
+      Enables private networking. Defaults to false.
+
+    -backups_enabled (optional)
+      Enables backups. Defaults to false.
 `,
 	Run: func(cmd *Command, args []string) error {
 		if len(args) >= 1 && args[0] == "help" {
@@ -59,6 +87,10 @@ flood image list # for images
 		}
 		cmd.Flag.Parse(args)
 		name := cmd.Flag.Lookup("name").Value.String()
+		if name == "" {
+			fmt.Println(cmd.Long)
+			os.Exit(2)
+		}
 		sshKeyIds := cmd.Flag.Lookup("ssh_key_ids").Value.String()
 		regionId := cmd.Flag.Lookup("region_id").Value.String()
 		sizeId := cmd.Flag.Lookup("size_id").Value.String()
@@ -101,6 +133,35 @@ flood droplet reboot <id>
 `,
 	Run: Require(func(cmd *Command, args []string) error {
 		resp, err := api.Call(dropletResource, "", "reboot")
+		if err != nil {
+			return err
+		}
+		return PrintResponse(resp)
+	}, RequireIdErr),
+}
+var dropletDestroy = &Command{
+	Name:  "destroy",
+	Short: "Destroy a droplet",
+	Flag:  flag.NewFlagSet("destroy", flag.ContinueOnError),
+	Long: `Usage:
+
+flood droplet destroy <id> [-scrub_data true]
+
+Options:
+
+    -scrub_data (optional)
+      This will strictly write 0s to your prior partition to ensure that all data is completely erased. Defaults to false
+`,
+	Run: Require(func(cmd *Command, args []string) error {
+		if len(args) >= 1 && args[0] == "help" {
+			fmt.Println(cmd.Long)
+			return nil
+		}
+		cmd.Flag.Parse(args)
+		scrub := cmd.Flag.Lookup("scrub_data").Value.String()
+		url := api.GetUrl(dropletResource, args[0], "destroy")
+		fullUrl := fmt.Sprintf("%v&%v", url, api.DestroyDropletParams(scrub))
+		resp, err := api.MakeRequest(fullUrl)
 		if err != nil {
 			return err
 		}
