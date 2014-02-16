@@ -12,6 +12,7 @@ var cmds = []*commands.Command{
 	commands.Droplet,
 	commands.Size,
 	commands.Image,
+	commands.Region,
 }
 
 func main() {
